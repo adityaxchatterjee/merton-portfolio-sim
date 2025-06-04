@@ -1,0 +1,69 @@
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Merton Portfolio Optimization Simulation</title>
+    <link rel="stylesheet" href="style.css" />
+    
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Define Module before solver.js loads -->
+    <script>
+        var Module = {
+            onRuntimeInitialized: function () {
+                const solve = Module.cwrap("solve", "string", [
+                    "number", "number", "number", "number", "number", "number"
+                ]);
+
+                document.querySelector("#run-button").addEventListener("click", (event) => {
+                    event.preventDefault();  // important
+
+                    const mu = parseFloat(document.querySelector("#mu").value);
+                    const r = parseFloat(document.querySelector("#r").value);
+                    const sigma = parseFloat(document.querySelector("#sigma").value);
+                    const rho = parseFloat(document.querySelector("#rho").value);
+                    const gamma = parseFloat(document.querySelector("#gamma").value);
+                    const T = parseFloat(document.querySelector("#T").value);
+
+                    const resultJSON = solve(mu, r, sigma, rho, gamma, T);
+                    console.log("Raw JSON:", resultJSON);
+                    const data = JSON.parse(resultJSON);
+                    console.log("Parsed data:", data);
+
+                    plotSurface("valueFunction", data, "Value Function V(w,t)", "V(w,t)", "valueFunction");
+                    plotSurface("piStar", data, "Optimal Risk Allocation", "π*(w,t)", "piStar");
+                    plotSurface("cStar", data, "Optimal Consumption", "c*(w,t)", "cStar");
+                });
+            }
+        };
+    </script>
+
+    <script src="solver.js"></script> <!-- Must come after Module definition -->
+    <script src="plot.js?v=2"></script>
+</head>
+
+<body>
+    <h1 class="text-3xl block font-bold text-black text-center mb-4">Merton Portfolio Optimization Simulator</h1>
+
+    <div class="container">
+        <div class="space-y-4">
+            <form id="inputs" class="space-y-4">
+                <label>Expected return: <input type="number" step="0.01" id="mu"/></label>
+                <label>Risk-free rate: <input type="number" step="0.01" id="r"/></label>
+                <label>Volatility: <input type="number" step="0.01" id="sigma"/></label>
+                <label>Discount rate: <input type="number" step="0.01" id="rho"/></label>
+                <label>Risk aversion: <input type="number" step="0.1" id="gamma"/></label>
+                <label>Years: <input type="number" step="1" id="T"/></label>
+                <button type="submit" id="run-button" class="mt-4 w-full bg-blue-800 hover:bg-black text-white py-2 px-4 rounded">
+                    Run Simulation</button>
+            </form>
+        </div>
+
+        <div id="plots">
+            <div id="valueFunction"></div>
+            <div id="piStar"></div>
+            <div id="cStar"></div>
+        </div>
+    </div>
+</body>
+</html>
